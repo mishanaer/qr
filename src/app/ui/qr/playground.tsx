@@ -68,7 +68,7 @@ export function QrPlayground() {
       if (request !== logoRequest.current) return;
       if (!image.naturalWidth || !image.naturalHeight) throw new Error("Empty image");
       if (image.naturalWidth !== image.naturalHeight) {
-        setLogoError("Choose a square image with the same width and height.");
+        setLogoError("Choose a square image");
         return;
       }
       const preview = document.createElement("canvas");
