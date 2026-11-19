@@ -23,8 +23,44 @@ const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 const cssColor = (ink: number[]) => `rgb(${ink.join(" ")})`;
 const now = () => performance.now() / 1000;
 const sideLayers = 32;
-const halfDepth = 0.18;
-const bevel = 0.075;
+// Estimate the equivalent rounded-rectangle radius from the four outer corners.
+function cornerRadius(pixels: ImageData) {
+  const { width, height, data } = pixels;
+  let peak = 0;
+  for (let i = 3; i < data.length; i += 4) peak = Math.max(peak, data[i]);
+  if (!peak) return 0;
+
+  const left = new Int32Array(height).fill(width);
+  const right = new Int32Array(height).fill(-1);
+  let first = height, last = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * 4 + 3] < peak / 2) continue;
+      left[y] = Math.min(left[y], x);
+      right[y] = x;
+      first = Math.min(first, y);
+      last = y;
+    }
+  }
+
+  const minX = Math.min(...left);
+  const maxX = Math.max(...right);
+  const span = maxX - minX + 1;
+  let missing = 0;
+  for (const fromTop of [true, false]) {
+    let insetLeft = span, insetRight = span;
+    const middle = Math.floor((first + last) / 2);
+    const rows = fromTop ? middle - first + 1 : last - middle;
+    for (let row = 0; row < rows; row++) {
+      const y = fromTop ? first + row : last - row;
+      insetLeft = Math.min(insetLeft, left[y] - minX);
+      insetRight = Math.min(insetRight, maxX - right[y]);
+      missing += insetLeft + insetRight;
+    }
+  }
+  // Four circular corners remove (4 - π) × radius² from a rectangle.
+  return Math.min(0.5, Math.sqrt(missing / (4 - Math.PI)) / span);
+}
 
 function makeLogoSide(logo: HTMLImageElement) {
   const side = document.createElement("canvas");
@@ -32,11 +68,14 @@ function makeLogoSide(logo: HTMLImageElement) {
   const ctx = side.getContext("2d");
   if (!ctx) return;
   ctx.drawImage(logo, 0, 0, side.width, side.height);
+  let radius = 0.23;
   let material = 0x808080;
   let width = 1;
   let center = 0.5;
   try {
-    const { data } = ctx.getImageData(0, 0, side.width, side.height);
+    const pixels = ctx.getImageData(0, 0, side.width, side.height);
+    radius = cornerRadius(pixels);
+    const { data } = pixels;
     const counts = new Map<number, number>();
     let mostFrequent = 0;
     let left = side.width;
@@ -67,7 +106,7 @@ function makeLogoSide(logo: HTMLImageElement) {
   ctx.globalCompositeOperation = "source-in";
   ctx.fillStyle = shade;
   ctx.fillRect(0, 0, side.width, side.height);
-  return { image: side, width, center };
+  return { image: side, width, center, halfDepth: Math.min(0.23, 0.11 + 0.30 * radius), bevel: 0.015 + 0.26 * radius };
 }
 
 export function mountFamilyQr(
@@ -292,8 +331,8 @@ export function mountFamilyQr(
         const sin = Math.sin(angle);
         const edge = Math.abs(sin);
         const faceWidth = width * Math.abs(cos);
-        const capWidth = faceWidth + 2 * width * bevel * edge;
-        const offset = width * logoSide.width * (halfDepth - bevel) * edge;
+        const capWidth = faceWidth + 2 * width * logoSide.bevel * edge;
+        const offset = width * logoSide.width * (logoSide.halfDepth - logoSide.bevel) * edge;
         const pivot = width * (logoSide.center - 0.5);
         const front = pivot + direction * offset;
         // Sweep rounded caps along the depth, using the uploaded alpha silhouette.
