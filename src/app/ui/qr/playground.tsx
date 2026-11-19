@@ -10,7 +10,7 @@ import { DownloadIcon } from "@/components/showcase-controls/download-icon";
 import { ShowcasePlayground } from "@/components/showcase-controls/playground";
 import { copyToClipboard } from "@/lib/clipboard";
 
-const defaultLink = "https://youtu.be/YaLOaZTVsGo";
+const defaultLink = "https://youtu.be/B1QJpdJJYvM?si=0cerviK9scjo_Zo0";
 const maxLength = 256;
 const logoFormats = ".svg,.png,.webp,.jpg,.jpeg";
 const subscribe = () => () => undefined;
