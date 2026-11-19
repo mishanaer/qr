@@ -20,12 +20,11 @@ const integrationPrompt = `Add the React QR component from ${sourceUrl}. Reuse i
 
 export function QrPlayground() {
   const [value, setValue] = useState(defaultLink);
-  const [customLogo, setCustomLogo] = useState<{ image: HTMLImageElement; name: string }>();
+  const [customLogo, setCustomLogo] = useState<{ image: HTMLImageElement; name: string; thumbnail?: string }>();
   const logo = customLogo?.image;
   const [logoError, setLogoError] = useState("");
   const [downloadError, setDownloadError] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
-  const logoInput = useRef<HTMLInputElement>(null);
   const logoRequest = useRef(0);
   const { resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
@@ -64,7 +63,11 @@ export function QrPlayground() {
         setLogoError("Choose a square image with the same width and height.");
         return;
       }
-      setCustomLogo({ image, name: file.name });
+      const preview = document.createElement("canvas");
+      preview.width = preview.height = 48;
+      const context = preview.getContext("2d");
+      context?.drawImage(image, 0, 0, preview.width, preview.height);
+      setCustomLogo({ image, name: file.name, thumbnail: context ? preview.toDataURL() : undefined });
     } catch {
       if (request === logoRequest.current) setLogoError("Could not open this image.");
     } finally {
@@ -120,11 +123,10 @@ export function QrPlayground() {
         <label className="grid gap-2">
           <span>Logo</span>
           <Input
-            ref={logoInput}
             type="file"
             accept={logoFormats}
             aria-description={logoPlaceholder}
-            fileDisplay={{ placeholder: logoPlaceholder, name: customLogo?.name }}
+            fileDisplay={{ placeholder: logoPlaceholder, name: customLogo?.name, thumbnail: customLogo?.thumbnail }}
             onChange={(event) => {
               const file = event.currentTarget.files?.[0];
               if (file) void changeLogo(file);
@@ -132,16 +134,6 @@ export function QrPlayground() {
           />
         </label>
         {logoError && <p className="text-xs" role="status">{logoError}</p>}
-        {logo && (
-          <Button variant="tertiary" onClick={() => {
-            logoRequest.current++;
-            if (logoInput.current) logoInput.current.value = "";
-            setCustomLogo(undefined);
-            setLogoError("");
-          }}>
-            Reset logo
-          </Button>
-        )}
       </div>
       <div className="grid gap-2">
         <Button variant="tertiary" disabled={!mounted} onClick={() => void copyPrompt()}>

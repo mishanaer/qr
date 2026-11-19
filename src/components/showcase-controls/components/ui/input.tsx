@@ -32,7 +32,7 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size">
   /** Pins the field to one step of the size ladder (default 36px, compact
    *  28px). Omitted, it follows the surrounding SizeProvider. */
   size?: SizeVariant;
-  fileDisplay?: { placeholder: string; name?: string };
+  fileDisplay?: { placeholder: string; name?: string; thumbnail?: string };
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -121,18 +121,33 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     if (isFile) {
       // Native inputs take no children, so the file icon sits beside the
       // input in a wrapper, over its left padding.
+      const graphicPosition = cn(
+        "pointer-events-none absolute top-1/2 -translate-y-1/2",
+        compact ? "left-2.5" : "left-3",
+      );
       return (
         <span data-slot="input-file" className="relative block w-full min-w-0">
-          <FileIcon
-            size={sizeClasses.icon}
-            strokeWidth={1.5}
-            aria-hidden
-            className={cn(
-              "pointer-events-none absolute top-1/2 -translate-y-1/2 transition-colors duration-80",
-              compact ? "left-2.5" : "left-3",
-              (fileDisplay ? fileDisplay.name : hasFile) ? "text-foreground" : "text-muted-foreground"
-            )}
-          />
+          {fileDisplay?.thumbnail ? (
+            // eslint-disable-next-line @next/next/no-img-element -- This is a tiny, local data URL.
+            <img
+              src={fileDisplay.thumbnail}
+              alt=""
+              width={sizeClasses.icon}
+              height={sizeClasses.icon}
+              className={cn(graphicPosition, "rounded-sm")}
+            />
+          ) : (
+            <FileIcon
+              size={sizeClasses.icon}
+              strokeWidth={1.5}
+              aria-hidden
+              className={cn(
+                graphicPosition,
+                "transition-colors duration-80",
+                (fileDisplay ? fileDisplay.name : hasFile) ? "text-foreground" : "text-muted-foreground"
+              )}
+            />
+          )}
           {input}
           {fileDisplay && (
             <span
