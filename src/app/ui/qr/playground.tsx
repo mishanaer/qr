@@ -31,6 +31,7 @@ export function QrPlayground() {
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
   const copyTimer = useRef<number | undefined>(undefined);
   const logoRequest = useRef(0);
+  const logoShake = useRef<Animation | null>(null);
   const { resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const tooLong = Array.from(value).length > maxLength;
@@ -67,7 +68,8 @@ export function QrPlayground() {
     }
   }
 
-  async function changeLogo(file: File) {
+  async function changeLogo(file: File, field: HTMLElement | null) {
+    logoShake.current?.cancel();
     const request = ++logoRequest.current;
     setLogoError("");
     if (!/\.(svg|png|webp|jpe?g)$/i.test(file.name)) {
@@ -83,6 +85,12 @@ export function QrPlayground() {
       if (!image.naturalWidth || !image.naturalHeight) throw new Error("Empty image");
       if (image.naturalWidth !== image.naturalHeight) {
         setLogoError("Choose a square image");
+        if (field && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          logoShake.current = field.animate(
+            [0, -4, 4, -2, 2, 0].map(x => ({ transform: `translateX(${x}px)`, easing: "ease-in-out" })),
+            { duration: 280 },
+          );
+        }
         return;
       }
       const preview = document.createElement("canvas");
@@ -150,6 +158,8 @@ export function QrPlayground() {
             type="file"
             accept={logoFormats}
             aria-description={logoPlaceholder}
+            aria-invalid={Boolean(logoError) || undefined}
+            aria-describedby={logoError ? "qr-logo-error" : undefined}
             fileDisplay={{
               placeholder: logoPlaceholder,
               name: customLogo?.name ?? (templateLogo ? "shef.svg" : undefined),
@@ -160,11 +170,11 @@ export function QrPlayground() {
               // Some browsers paint a native thumbnail even when the file text is transparent.
               // Only the validated logo in React state should appear in this picker.
               event.currentTarget.value = "";
-              if (file) void changeLogo(file);
+              if (file) void changeLogo(file, event.currentTarget.closest<HTMLElement>('[data-slot="input-file"]'));
             }}
           />
         </label>
-        {logoError && <p className="text-xs" role="status">{logoError}</p>}
+        {logoError && <p id="qr-logo-error" className="text-xs" role="status">{logoError}</p>}
       </div>
       <div className="grid gap-2">
         <Button variant="tertiary" disabled={!mounted} aria-label="Copy prompt" onClick={() => void copyPrompt()}>
