@@ -1,5 +1,5 @@
 import type { QrCodeGenerateResult } from "uqr";
-import { makeLayout, markCenter, paletteAt, palettes } from "./layout";
+import { cardRadius, finderRings, fitLogo, makeLayout, markCenter, paletteAt, palettes } from "./layout";
 import {
   black,
   clamp,
@@ -34,17 +34,13 @@ export function mountFamilyQr(
   const target = canvas.parentElement;
   if (!ctx || !target) return;
   const { cell, logoWidth, dots, finders } = makeLayout(code);
-  const logoAspect = logo ? logo.naturalWidth / logo.naturalHeight : 1;
-  const card = squircleOutline(0, 0, 1, 0.173);
+  const logoBounds = logo?.naturalWidth && logo.naturalHeight ? fitLogo(1, logo) : undefined;
+  const card = squircleOutline(0, 0, 1, cardRadius, new Path2D());
   let outline = "";
-  const face = logoOutline(0);
+  const face = logoOutline(0, new Path2D());
   const faceColors = palettes.map((_, p) => paletteAt(p, markCenter));
-  const rings = [
-    [7, 3],
-    [5.6, 2.04],
-    [3.3, 1],
-  ].map(([width, radius]) =>
-    squircleOutline(-width / 2, -width / 2, width, radius),
+  const rings = finderRings.map(([width, radius]) =>
+    squircleOutline(-width / 2, -width / 2, width, radius, new Path2D()),
   );
   let waves: Wave[] = [];
   let strokes: Stroke[] = [];
@@ -239,15 +235,15 @@ export function mountFamilyQr(
     const size = (logoWidth / 100) * (1 - 0.23 * pressure(t));
     ctx.save();
     ctx.translate(markCenter, markCenter);
-    if (logo && logoAspect > 0 && Number.isFinite(logoAspect)) {
-      const width = size * 100 * Math.min(1, logoAspect);
-      const height = size * 100 * Math.min(1, 1 / logoAspect);
+    if (logo && logoBounds) {
+      const width = size * 100 * logoBounds.width;
+      const height = size * 100 * logoBounds.height;
       ctx.scale(Math.abs(Math.cos(angle)), 1);
       ctx.drawImage(logo, -width / 2, -height / 2, width, height);
     } else {
       ctx.scale(Math.sin(2 * angle) > 0 ? -size : size, size);
       ctx.fillStyle = cssColor(logoInk);
-      ctx.fill(angle ? logoOutline(angle) : face, "evenodd");
+      ctx.fill(angle ? logoOutline(angle, new Path2D()) : face, "evenodd");
     }
     ctx.restore();
 

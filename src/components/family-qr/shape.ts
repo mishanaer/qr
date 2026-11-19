@@ -1,16 +1,18 @@
 import { logoPoses } from "./logo-poses";
 
+type Outline = Pick<Path2D, "moveTo" | "lineTo" | "quadraticCurveTo" | "closePath">;
+
 // The card and all three layers of each finder use the same continuous corner.
-export function squircleOutline(
+export function squircleOutline<T extends Outline>(
   left: number,
   top: number,
   side: number,
   radius: number,
+  path: T,
 ) {
   const power = 2 / 3.264;
   const right = left + side;
   const bottom = top + side;
-  const path = new Path2D();
   path.moveTo(right - radius, top);
   for (const [quadrant, [cx, cy]] of [
     [right - radius, top + radius],
@@ -39,7 +41,7 @@ const directions = logoPoses[0].radii.map((_, i, samples) => {
 
 // Interpolate the silhouette as well as the opening. Seen edge-on, the mark
 // has a solid rounded side about half the width of its face.
-export function logoOutline(rotation: number) {
+export function logoOutline<T extends Outline>(rotation: number, path: T) {
   const turn = ((rotation % Math.PI) + Math.PI) % Math.PI;
   const degrees = (Math.min(turn, Math.PI - turn) * 180) / Math.PI;
   const next = logoPoses.findIndex((pose) => pose.angle >= degrees);
@@ -50,7 +52,6 @@ export function logoOutline(rotation: number) {
   const offset = mix(a.offset, b.offset);
   const width = mix(a.width, b.width) / 200;
   const height = mix(a.height, b.height) / 200;
-  const path = new Path2D();
   for (const half of [-1, 1]) {
     for (let k = 0; k < directions.length; k++) {
       const i = half < 0 ? k : directions.length - k - 1;

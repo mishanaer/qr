@@ -25,6 +25,13 @@ export function paletteAt(index: number, y: number) {
 
 const inset = 24 / 366;
 export const markCenter = 0.5 + 1 / 366;
+export const cardRadius = 0.173;
+export const finderRings = [[7, 3], [5.6, 2.04], [3.3, 1]] as const;
+
+export function fitLogo(side: number, image: HTMLImageElement) {
+  const aspect = image.naturalWidth / image.naturalHeight;
+  return { width: side * Math.min(1, aspect), height: side * Math.min(1, 1 / aspect) };
+}
 
 export function encodeQr(value: string) {
   try {

@@ -11,7 +11,7 @@ pnpm install
 pnpm dev
 ```
 
-Open [localhost:3000](http://localhost:3000). The demo accepts SVG, PNG, WebP, and JPEG. Images are processed in the browser.
+Open [localhost:3000](http://localhost:3000). The demo accepts SVG, PNG, WebP, and JPEG. Images are processed in the browser. Download a static SVG or a 1200 × 1200 PNG from the demo. The QR and built-in logo are vector in SVG downloads, and custom logos are embedded as PNG.
 
 ```tsx
 <QrCode value="https://example.com" label="Scan to open the site" />

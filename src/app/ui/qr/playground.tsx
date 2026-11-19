@@ -3,6 +3,7 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { QrCode } from "@/components/qr-code";
+import { downloadQr } from "@/components/family-qr/download";
 import { Button } from "@/components/showcase-controls/components/ui/button";
 import { Input } from "@/components/showcase-controls/components/ui/input";
 import { ShowcasePlayground } from "@/components/showcase-controls/playground";
@@ -16,11 +17,22 @@ export function QrPlayground() {
   const [value, setValue] = useState(referenceValue);
   const [logo, setLogo] = useState<HTMLImageElement>();
   const [logoError, setLogoError] = useState("");
+  const [downloadError, setDownloadError] = useState("");
   const logoInput = useRef<HTMLInputElement>(null);
   const logoRequest = useRef(0);
   const { resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const tooLong = Array.from(value).length > maxLength;
+  const canDownload = !tooLong && Boolean(value.trim());
+
+  async function saveQr(format: "svg" | "png") {
+    setDownloadError("");
+    try {
+      await downloadQr(value, format, logo);
+    } catch {
+      setDownloadError("Could not download the QR code.");
+    }
+  }
 
   async function changeLogo(file: File) {
     const request = ++logoRequest.current;
@@ -100,6 +112,17 @@ export function QrPlayground() {
             Reset logo
           </Button>
         )}
+      </div>
+      <div className="grid gap-2">
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="tertiary" disabled={!canDownload} onClick={() => void saveQr("svg")}>
+            Download SVG
+          </Button>
+          <Button variant="tertiary" disabled={!canDownload} onClick={() => void saveQr("png")}>
+            Download PNG
+          </Button>
+        </div>
+        {downloadError && <p className="text-xs" role="status">{downloadError}</p>}
       </div>
     </ShowcasePlayground>
   );
