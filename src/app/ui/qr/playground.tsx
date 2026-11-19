@@ -12,6 +12,7 @@ import { ShowcasePlayground } from "@/components/showcase-controls/playground";
 import { copyToClipboard } from "@/lib/clipboard";
 
 const defaultLink = "https://youtu.be/B1QJpdJJYvM?si=0cerviK9scjo_Zo0";
+const templateLogoUrl = "/ui/qr/shef-app-icon.svg";
 const maxLength = 256;
 const logoFormats = ".svg,.png,.webp,.jpg,.jpeg";
 const logoPlaceholder = "SVG, PNG, WebP, or JPEG.";
@@ -22,7 +23,9 @@ const integrationPrompt = `Add the React QR component from ${sourceUrl}. Reuse i
 export function QrPlayground() {
   const [value, setValue] = useState(defaultLink);
   const [customLogo, setCustomLogo] = useState<{ image: HTMLImageElement; name: string; thumbnail?: string }>();
-  const logo = customLogo?.image;
+  const [templateLogo, setTemplateLogo] = useState<HTMLImageElement | null>();
+  const logo = customLogo?.image ?? templateLogo ?? undefined;
+  const loadingLogo = !customLogo && templateLogo === undefined;
   const [logoError, setLogoError] = useState("");
   const [downloadError, setDownloadError] = useState("");
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
@@ -31,7 +34,18 @@ export function QrPlayground() {
   const { resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const tooLong = Array.from(value).length > maxLength;
-  const canDownload = mounted && !tooLong && Boolean(value.trim());
+  const canDownload = mounted && !loadingLogo && !tooLong && Boolean(value.trim());
+
+  useEffect(() => {
+    const image = new Image();
+    image.onload = () => setTemplateLogo(image);
+    image.onerror = () => setTemplateLogo(null);
+    image.src = templateLogoUrl;
+    return () => {
+      image.onload = null;
+      image.onerror = null;
+    };
+  }, []);
 
   useEffect(() => () => window.clearTimeout(copyTimer.current), []);
 
@@ -92,6 +106,8 @@ export function QrPlayground() {
           <p id="qr-content-error" role="status">
             Enter up to {maxLength} characters to preview your code.
           </p>
+        ) : value.trim() && loadingLogo ? (
+          <div aria-busy="true" className="aspect-square w-[300px] max-w-full" />
         ) : value.trim() ? (
           <QrCode
             value={value}
@@ -134,7 +150,11 @@ export function QrPlayground() {
             type="file"
             accept={logoFormats}
             aria-description={logoPlaceholder}
-            fileDisplay={{ placeholder: logoPlaceholder, name: customLogo?.name, thumbnail: customLogo?.thumbnail }}
+            fileDisplay={{
+              placeholder: logoPlaceholder,
+              name: customLogo?.name ?? (templateLogo ? "shef-app-icon.svg" : undefined),
+              thumbnail: customLogo ? customLogo.thumbnail : (templateLogo ? templateLogoUrl : undefined),
+            }}
             onChange={(event) => {
               const file = event.currentTarget.files?.[0];
               if (file) void changeLogo(file);
