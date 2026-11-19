@@ -35,6 +35,7 @@ export function QrCode({
 
   return (
     <Surface
+      data-slot="qr-code"
       type={interactive ? "button" : undefined}
       aria-label={
         interactive ? label + ". Press the center or drag to paint" : undefined

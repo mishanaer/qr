@@ -77,6 +77,11 @@
   outline-offset: 4px;
 }
 
+.showcase [data-slot="qr-code"]:focus-visible {
+  outline-color: var(--deslop-primary-40);
+  border-radius: var(--ui-radius-20);
+}
+
 .showcase :global(.text-foreground) {
   color: var(--foreground);
 }
