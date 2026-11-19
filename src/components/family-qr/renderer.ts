@@ -287,15 +287,20 @@ export function mountFamilyQr(
         const poseOffset = direction * mix(a.offset, b.offset, fraction) / restPose.width;
         const offset = width * (logoSide.center - 0.5 + poseOffset);
         const front = offset + direction * depth / 2;
-        if (depth > 0.00001) {
-          // Overlap the alpha silhouettes so the side stays solid even edge-on.
-          const slice = Math.max(faceWidth, 2 * depth / sideLayers);
-          for (let layer = 0; layer < sideLayers; layer++) {
-            const x = mix(offset - direction * depth / 2, front, layer / sideLayers);
+        if (depth > 0) {
+          // Keep layers a pixel apart and fade in the fraction of the last layer.
+          // At rest no stacked alpha remains under the image's translucent edges.
+          const spacing = Math.max(1 / side, width / sideLayers);
+          const layers = depth / spacing;
+          const slice = Math.max(faceWidth, Math.min(depth, 2 * spacing));
+          for (let layer = Math.ceil(layers) - 1; layer >= 0; layer--) {
+            ctx.globalAlpha = Math.min(1, layers - layer);
+            const x = front - direction * Math.min(depth, (layer + 1) * spacing);
             ctx.drawImage(
               logoSide.image, x - slice * logoSide.center, -heightAtAngle / 2, slice, heightAtAngle,
             );
           }
+          ctx.globalAlpha = 1;
         }
         if (faceWidth > 0) {
           ctx.drawImage(
