@@ -98,7 +98,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             // gap (12 + 16 + 8, 10 + 14 + 4 compact).
             compact ? "py-1 pl-7" : "py-[7px] pl-9",
             !hasFile && "text-muted-foreground",
-            fileDisplay && "text-transparent file:text-transparent",
+            fileDisplay && "cursor-pointer text-transparent file:text-transparent",
           ],
           isNumber && [
             // The browser's spinner arrows give way to the stepper buttons.
@@ -153,13 +153,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             <span
               aria-hidden
               className={cn(
-                "pointer-events-none absolute inset-y-0 flex min-w-0 items-center gap-2",
+                "pointer-events-none absolute inset-y-0 flex min-w-0 items-center",
                 compact ? "left-7 right-2.5" : "left-9 right-3",
                 sizeClasses.field,
               )}
               style={{ fontVariationSettings: fontWeights.normal, ...style }}
             >
-              <span className="shrink-0 text-foreground">Choose file</span>
               <span className={fileDisplay.name ? "truncate text-foreground" : "min-w-0 leading-none text-muted-foreground"}>
                 {fileDisplay.name || fileDisplay.placeholder}
               </span>
