@@ -21,7 +21,7 @@ const sourceUrl = "https://github.com/mishanaer/qr";
 const integrationPrompt = `Add the React QR component from ${sourceUrl}. Reuse its source and license notices, install uqr@0.1.2, and render <QrCode value={qrValue} label="Scan QR code" /> on the client.`;
 
 export function QrPlayground() {
-  const [value, setValue] = useState(defaultLink);
+  const [{ value, qrValue }, setLink] = useState({ value: defaultLink, qrValue: defaultLink });
   const [customLogo, setCustomLogo] = useState<{ image: HTMLImageElement; name: string; thumbnail?: string }>();
   const [templateLogo, setTemplateLogo] = useState<HTMLImageElement | null>();
   const logo = customLogo?.image ?? templateLogo ?? undefined;
@@ -35,7 +35,7 @@ export function QrPlayground() {
   const { resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const tooLong = Array.from(value).length > maxLength;
-  const canDownload = mounted && !loadingLogo && !tooLong && Boolean(value.trim());
+  const canDownload = mounted && !loadingLogo && !tooLong;
 
   useEffect(() => {
     const image = new Image();
@@ -59,10 +59,18 @@ export function QrPlayground() {
     }
   }
 
+  function changeLink(nextValue: string) {
+    const valid = Boolean(nextValue.trim()) && Array.from(nextValue).length <= maxLength;
+    setLink(previous => ({
+      value: nextValue,
+      qrValue: valid ? nextValue : previous.qrValue,
+    }));
+  }
+
   async function saveQr(format: "svg" | "png") {
     setDownloadError("");
     try {
-      await shareOrDownloadQr(value, format, logo);
+      await shareOrDownloadQr(qrValue, format, logo);
     } catch {
       setDownloadError("Could not export the QR code.");
     }
@@ -114,17 +122,15 @@ export function QrPlayground() {
           <p id="qr-content-error" role="status">
             Enter up to {maxLength} characters to preview your code.
           </p>
-        ) : value.trim() && loadingLogo ? (
+        ) : loadingLogo ? (
           <div aria-busy="true" className="aspect-square w-[300px] max-w-full" />
-        ) : value.trim() ? (
+        ) : (
           <QrCode
-            value={value}
+            value={qrValue}
             label="Scannable QR code"
             logo={logo}
             outline={mounted && resolvedTheme === "light" ? "var(--primary-alpha-20)" : undefined}
           />
-        ) : (
-          <p role="status">Enter text or a URL to preview your code.</p>
         )
       }
       previewActions={
@@ -147,7 +153,7 @@ export function QrPlayground() {
           value={value}
           aria-invalid={tooLong || undefined}
           aria-describedby={tooLong ? "qr-content-error" : undefined}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={(event) => changeLink(event.target.value)}
           placeholder="https://example.com"
         />
       </label>
