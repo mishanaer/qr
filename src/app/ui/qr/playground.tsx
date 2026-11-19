@@ -15,16 +15,7 @@ const maxLength = 256;
 const logoFormats = ".svg,.png,.webp,.jpg,.jpeg";
 const subscribe = () => () => undefined;
 const sourceUrl = "https://github.com/mishanaer/qr";
-const integrationPrompt = `Integrate the animated React QR Code component into this project.
-
-Source: ${sourceUrl}
-Demo: https://mishanaer.com/ui/qr
-
-1. Inspect the project's React setup, package manager, and the screen where the QR code belongs.
-2. Reuse the source from src/components/qr-code.tsx, src/components/family-qr/, and src/hooks/use-prefers-reduced-motion.ts. Keep their relative imports working and retain the MIT and upstream license notices. Add uqr@0.1.2 with the project's package manager.
-3. Import the named QrCode export from the copied component. Render <QrCode value={qrValue} label="Scan to open the link" /> using the app's actual text or URL. The component needs a browser canvas and has no Tailwind or next-themes dependency. Use it in a client component where the framework distinguishes server and client code.
-4. Use the existing app layout. Keep the rounded dots, press and drag interaction, and reduced-motion behavior. Use the optional size prop for width, static to disable interaction, or logo for a decoded HTMLImageElement when the screen needs a custom center image.
-5. Run the project's checks, open the target screen, and verify that a scanner returns the exact value. Test with the intended custom logo if there is one and report any scanning checks you couldn't run.`;
+const integrationPrompt = `Add the React QR component from ${sourceUrl}. Reuse its source and license notices, install uqr@0.1.2, and render <QrCode value={qrValue} label="Scan QR code" /> on the client. Use the app's actual QR value and verify that it scans correctly.`;
 
 export function QrPlayground() {
   const [value, setValue] = useState(defaultLink);
