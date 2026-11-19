@@ -147,7 +147,7 @@ export function QrPlayground() {
       </div>
       <div className="grid gap-2">
         <Button variant="tertiary" disabled={!mounted} onClick={() => void copyPrompt()}>
-          Copy integration prompt
+          Copy prompt
         </Button>
         <p className={copyStatus ? "text-xs" : "sr-only"} role="status">{copyStatus}</p>
       </div>
