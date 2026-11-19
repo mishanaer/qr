@@ -39,15 +39,20 @@ const directions = logoPoses[0].radii.map((_, i, samples) => {
   return [Math.cos(angle), Math.sin(angle)];
 });
 
-// Interpolate the silhouette as well as the opening. Seen edge-on, the mark
-// has a solid rounded side about half the width of its face.
-export function logoOutline<T extends Outline>(rotation: number, path: T) {
+export function getLogoPose(rotation: number) {
   const turn = ((rotation % Math.PI) + Math.PI) % Math.PI;
   const degrees = (Math.min(turn, Math.PI - turn) * 180) / Math.PI;
   const next = logoPoses.findIndex((pose) => pose.angle >= degrees);
   const b = logoPoses[next < 0 ? logoPoses.length - 1 : next];
   const a = logoPoses[Math.max(0, next - 1)];
   const fraction = a === b ? 0 : (degrees - a.angle) / (b.angle - a.angle);
+  return { a, b, fraction };
+}
+
+// Interpolate the silhouette as well as the opening. Seen edge-on, the mark
+// has a solid rounded side about half the width of its face.
+export function logoOutline<T extends Outline>(rotation: number, path: T) {
+  const { a, b, fraction } = getLogoPose(rotation);
   const mix = (start: number, end: number) => start + (end - start) * fraction;
   const offset = mix(a.offset, b.offset);
   const width = mix(a.width, b.width) / 200;

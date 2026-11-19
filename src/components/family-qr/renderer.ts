@@ -14,7 +14,7 @@ import {
   smooth,
   type Wave,
 } from "./motion";
-import { logoOutline, squircleOutline } from "./shape";
+import { getLogoPose, logoOutline, squircleOutline } from "./shape";
 import { logoPoses } from "./logo-poses";
 
 type Point = { x: number; y: number };
@@ -23,8 +23,8 @@ const center = { x: markCenter, y: markCenter };
 const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 const cssColor = (ink: number[]) => `rgb(${ink.join(" ")})`;
 const now = () => performance.now() / 1000;
-const logoDepth = logoPoses[logoPoses.length - 1].width / 100;
 const sideLayers = 32;
+const restPose = logoPoses[0];
 
 function makeLogoSide(logo: HTMLImageElement) {
   const side = document.createElement("canvas");
@@ -37,6 +37,7 @@ function makeLogoSide(logo: HTMLImageElement) {
   ctx.fillRect(0, 0, side.width, side.height);
 
   let width = 1;
+  let center = 0.5;
   try {
     const { data } = ctx.getImageData(0, 0, side.width, side.height);
     let left = side.width;
@@ -48,11 +49,12 @@ function makeLogoSide(logo: HTMLImageElement) {
       right = Math.max(right, x);
     }
     width = Math.max(0, right - left + 1) / side.width;
+    if (width) center = (left + right + 1) / (2 * side.width);
   } catch (error) {
     // A cross-origin image can be painted even if its pixels can't be read.
     if (!(error instanceof DOMException && error.name === "SecurityError")) throw error;
   }
-  return { image: side, width };
+  return { image: side, width, center };
 }
 
 export function mountFamilyQr(
@@ -265,26 +267,46 @@ export function mountFamilyQr(
       ctx.restore();
     }
     const angle = logoAngle(latest, t);
+    const direction = Math.sin(2 * angle) > 0 ? -1 : 1;
     const size = (logoWidth / 100) * (1 - 0.23 * pressure(t));
     ctx.save();
     ctx.translate(markCenter, markCenter);
     if (logo && logoBounds) {
       const width = size * 100 * logoBounds.width;
       const height = size * 100 * logoBounds.height;
-      const faceWidth = width * Math.abs(Math.cos(angle));
-      const depth = logoSide ? width * logoSide.width * logoDepth * Math.sin(angle) : 0;
-      const front = depth / 2;
-      if (logoSide && Math.abs(depth) > 0.00001) {
-        // Overlap the alpha silhouettes so the side stays solid even edge-on.
-        const slice = Math.max(faceWidth, (2 * Math.abs(depth)) / sideLayers);
-        for (let layer = 0; layer < sideLayers; layer++) {
-          const x = mix(-front, front, layer / sideLayers);
-          ctx.drawImage(logoSide.image, x - slice / 2, -height / 2, slice, height);
+      if (logoSide && angle) {
+        const { a, b, fraction } = getLogoPose(angle);
+        const span = mix(a.width, b.width, fraction) / restPose.width;
+        const heightAtAngle = height * (mix(a.height, b.height, fraction) / restPose.height);
+        // The built-in mark's opening tracks how much of its front face is visible.
+        const frontSpan =
+          mix(a.hole[1] - a.hole[0], b.hole[1] - b.hole[0], fraction) /
+          (restPose.hole[1] - restPose.hole[0]);
+        const faceWidth = width * Math.min(span, frontSpan);
+        const depth = (width * span - faceWidth) * logoSide.width;
+        const poseOffset = direction * mix(a.offset, b.offset, fraction) / restPose.width;
+        const offset = width * (logoSide.center - 0.5 + poseOffset);
+        const front = offset + direction * depth / 2;
+        if (depth > 0.00001) {
+          // Overlap the alpha silhouettes so the side stays solid even edge-on.
+          const slice = Math.max(faceWidth, 2 * depth / sideLayers);
+          for (let layer = 0; layer < sideLayers; layer++) {
+            const x = mix(offset - direction * depth / 2, front, layer / sideLayers);
+            ctx.drawImage(
+              logoSide.image, x - slice * logoSide.center, -heightAtAngle / 2, slice, heightAtAngle,
+            );
+          }
         }
+        if (faceWidth > 0) {
+          ctx.drawImage(
+            logo, front - faceWidth * logoSide.center, -heightAtAngle / 2, faceWidth, heightAtAngle,
+          );
+        }
+      } else {
+        ctx.drawImage(logo, -width / 2, -height / 2, width, height);
       }
-      ctx.drawImage(logo, front - faceWidth / 2, -height / 2, faceWidth, height);
     } else {
-      ctx.scale(Math.sin(2 * angle) > 0 ? -size : size, size);
+      ctx.scale(direction * size, size);
       ctx.fillStyle = cssColor(logoInk);
       ctx.fill(angle ? logoOutline(angle, new Path2D()) : face, "evenodd");
     }
