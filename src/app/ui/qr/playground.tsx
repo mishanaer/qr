@@ -9,7 +9,7 @@ import { Input } from "@/components/showcase-controls/components/ui/input";
 import { ShowcasePlayground } from "@/components/showcase-controls/playground";
 import { copyToClipboard } from "@/lib/clipboard";
 
-const referenceValue = "0x0000000000000000000000000000000000000000";
+const defaultLink = "https://youtu.be/YaLOaZTVsGo";
 const maxLength = 256;
 const logoFormats = ".svg,.png,.webp,.jpg,.jpeg";
 const subscribe = () => () => undefined;
@@ -26,7 +26,7 @@ Demo: https://mishanaer.com/ui/qr
 5. Run the project's checks, open the target screen, and verify that a scanner returns the exact value. Test with the intended custom logo if there is one and report any scanning checks you couldn't run.`;
 
 export function QrPlayground() {
-  const [value, setValue] = useState(referenceValue);
+  const [value, setValue] = useState(defaultLink);
   const [logo, setLogo] = useState<HTMLImageElement>();
   const [logoError, setLogoError] = useState("");
   const [downloadError, setDownloadError] = useState("");
@@ -108,13 +108,13 @@ export function QrPlayground() {
       }
     >
       <label className="grid gap-2">
-        <span>Content</span>
+        <span>Link</span>
         <Input
           value={value}
           aria-invalid={tooLong || undefined}
           aria-describedby={tooLong ? "qr-content-error" : undefined}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="Text or URL"
+          placeholder="https://example.com"
         />
       </label>
       <div className="grid gap-2">
