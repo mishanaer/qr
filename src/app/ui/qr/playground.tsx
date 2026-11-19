@@ -12,7 +12,7 @@ import { ShowcasePlayground } from "@/components/showcase-controls/playground";
 import { copyToClipboard } from "@/lib/clipboard";
 
 const defaultLink = "https://youtu.be/B1QJpdJJYvM?si=0cerviK9scjo_Zo0";
-const templateLogoUrl = "/ui/qr/shef-app-icon.svg";
+const templateLogoUrl = "/ui/qr/shef.svg";
 const maxLength = 256;
 const logoFormats = ".svg,.png,.webp,.jpg,.jpeg";
 const logoPlaceholder = "SVG, PNG, WebP, or JPEG.";
@@ -152,7 +152,7 @@ export function QrPlayground() {
             aria-description={logoPlaceholder}
             fileDisplay={{
               placeholder: logoPlaceholder,
-              name: customLogo?.name ?? (templateLogo ? "shef-app-icon.svg" : undefined),
+              name: customLogo?.name ?? (templateLogo ? "shef.svg" : undefined),
               thumbnail: customLogo ? customLogo.thumbnail : (templateLogo ? templateLogoUrl : undefined),
             }}
             onChange={(event) => {
