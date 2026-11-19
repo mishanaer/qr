@@ -18,7 +18,7 @@ const logoFormats = ".svg,.png,.webp,.jpg,.jpeg";
 const logoPlaceholder = "SVG, PNG, WebP, or JPEG.";
 const subscribe = () => () => undefined;
 const sourceUrl = "https://github.com/mishanaer/qr";
-const integrationPrompt = `Add the React QR component from ${sourceUrl}. Reuse its source and license notices, install uqr@0.1.2, and render <QrCode value={qrValue} label="Scan QR code" /> on the client. Use the app's actual QR value and verify that it scans correctly.`;
+const integrationPrompt = `Add the React QR component from ${sourceUrl}. Reuse its source and license notices, install uqr@0.1.2, and render <QrCode value={qrValue} label="Scan QR code" /> on the client.`;
 
 export function QrPlayground() {
   const [value, setValue] = useState(defaultLink);
