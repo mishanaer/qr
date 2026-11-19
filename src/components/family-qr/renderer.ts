@@ -14,8 +14,7 @@ import {
   smooth,
   type Wave,
 } from "./motion";
-import { getLogoPose, logoOutline, squircleOutline } from "./shape";
-import { logoPoses } from "./logo-poses";
+import { logoOutline, squircleOutline } from "./shape";
 
 type Point = { x: number; y: number };
 type Stroke = Point & { born: number; palette: number };
@@ -24,7 +23,8 @@ const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 const cssColor = (ink: number[]) => `rgb(${ink.join(" ")})`;
 const now = () => performance.now() / 1000;
 const sideLayers = 32;
-const restPose = logoPoses[0];
+const halfDepth = 0.18;
+const bevel = 0.075;
 
 function makeLogoSide(logo: HTMLImageElement) {
   const side = document.createElement("canvas");
@@ -32,14 +32,13 @@ function makeLogoSide(logo: HTMLImageElement) {
   const ctx = side.getContext("2d");
   if (!ctx) return;
   ctx.drawImage(logo, 0, 0, side.width, side.height);
-  ctx.globalCompositeOperation = "source-in";
-  ctx.fillStyle = "#353535";
-  ctx.fillRect(0, 0, side.width, side.height);
-
+  let material = 0x808080;
   let width = 1;
   let center = 0.5;
   try {
     const { data } = ctx.getImageData(0, 0, side.width, side.height);
+    const counts = new Map<number, number>();
+    let mostFrequent = 0;
     let left = side.width;
     let right = -1;
     for (let i = 3; i < data.length; i += 4) {
@@ -47,6 +46,13 @@ function makeLogoSide(logo: HTMLImageElement) {
       const x = ((i - 3) / 4) % side.width;
       left = Math.min(left, x);
       right = Math.max(right, x);
+      const color = (data[i - 3] << 16) | (data[i - 2] << 8) | data[i - 1];
+      const weight = (counts.get(color) ?? 0) + data[i];
+      counts.set(color, weight);
+      if (weight > mostFrequent) {
+        mostFrequent = weight;
+        material = color;
+      }
     }
     width = Math.max(0, right - left + 1) / side.width;
     if (width) center = (left + right + 1) / (2 * side.width);
@@ -54,6 +60,13 @@ function makeLogoSide(logo: HTMLImageElement) {
     // A cross-origin image can be painted even if its pixels can't be read.
     if (!(error instanceof DOMException && error.name === "SecurityError")) throw error;
   }
+  const channels = [material >> 16, (material >> 8) & 255, material & 255];
+  const shade = ctx.createLinearGradient(0, 0, 0, side.height);
+  shade.addColorStop(0, cssColor(channels.map(c => c * 0.82)));
+  shade.addColorStop(1, cssColor(channels.map(c => c * 0.57)));
+  ctx.globalCompositeOperation = "source-in";
+  ctx.fillStyle = shade;
+  ctx.fillRect(0, 0, side.width, side.height);
   return { image: side, width, center };
 }
 
@@ -275,37 +288,26 @@ export function mountFamilyQr(
       const width = size * 100 * logoBounds.width;
       const height = size * 100 * logoBounds.height;
       if (logoSide && angle) {
-        const { a, b, fraction } = getLogoPose(angle);
-        const span = mix(a.width, b.width, fraction) / restPose.width;
-        const heightAtAngle = height * (mix(a.height, b.height, fraction) / restPose.height);
-        // The built-in mark's opening tracks how much of its front face is visible.
-        const frontSpan =
-          mix(a.hole[1] - a.hole[0], b.hole[1] - b.hole[0], fraction) /
-          (restPose.hole[1] - restPose.hole[0]);
-        const faceWidth = width * Math.min(span, frontSpan);
-        const depth = (width * span - faceWidth) * logoSide.width;
-        const poseOffset = direction * mix(a.offset, b.offset, fraction) / restPose.width;
-        const offset = width * (logoSide.center - 0.5 + poseOffset);
-        const front = offset + direction * depth / 2;
-        if (depth > 0) {
-          // Keep layers a pixel apart and fade in the fraction of the last layer.
-          // At rest no stacked alpha remains under the image's translucent edges.
-          const spacing = Math.max(1 / side, width / sideLayers);
-          const layers = depth / spacing;
-          const slice = Math.max(faceWidth, Math.min(depth, 2 * spacing));
-          for (let layer = Math.ceil(layers) - 1; layer >= 0; layer--) {
-            ctx.globalAlpha = Math.min(1, layers - layer);
-            const x = front - direction * Math.min(depth, (layer + 1) * spacing);
-            ctx.drawImage(
-              logoSide.image, x - slice * logoSide.center, -heightAtAngle / 2, slice, heightAtAngle,
-            );
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        const edge = Math.abs(sin);
+        const faceWidth = width * Math.abs(cos);
+        const capWidth = faceWidth + 2 * width * bevel * edge;
+        const offset = width * logoSide.width * (halfDepth - bevel) * edge;
+        const pivot = width * (logoSide.center - 0.5);
+        const front = pivot + direction * offset;
+        // Sweep rounded caps along the depth, using the uploaded alpha silhouette.
+        const steps = Math.min(sideLayers, Math.ceil(2 * offset * side));
+        if (steps > 0) {
+          ctx.globalAlpha = Math.min(1, 2 * offset * side);
+          for (let i = 0; i <= steps; i++) {
+            const x = pivot + mix(-offset, offset, i / steps);
+            ctx.drawImage(logoSide.image, x - capWidth * logoSide.center, -height / 2, capWidth, height);
           }
           ctx.globalAlpha = 1;
         }
-        if (faceWidth > 0) {
-          ctx.drawImage(
-            logo, front - faceWidth * logoSide.center, -heightAtAngle / 2, faceWidth, heightAtAngle,
-          );
+        if (faceWidth > width * 0.0001) {
+          ctx.drawImage(logo, front - faceWidth * logoSide.center, -height / 2, faceWidth, height);
         }
       } else {
         ctx.drawImage(logo, -width / 2, -height / 2, width, height);
