@@ -331,22 +331,32 @@ export function mountFamilyQr(
         const sin = Math.sin(angle);
         const edge = Math.abs(sin);
         const faceWidth = width * Math.abs(cos);
-        const capWidth = faceWidth + 2 * width * logoSide.bevel * edge;
-        const offset = width * logoSide.width * (logoSide.halfDepth - logoSide.bevel) * edge;
+        const halfDepth = width * logoSide.width * logoSide.halfDepth * edge;
         const pivot = width * (logoSide.center - 0.5);
-        const front = pivot + direction * offset;
-        // Sweep rounded caps along the depth, using the uploaded alpha silhouette.
-        const steps = Math.min(sideLayers, Math.ceil(2 * offset * side));
+        const front = pivot + direction * halfDepth;
+        // Both ends share the same bevel. The face sits at the nearest end.
+        const rim = logoSide.bevel / logoSide.halfDepth;
+        const inset = 2 * logoSide.bevel * (1 - Math.abs(cos));
+        const faceHeight = height * (1 - inset);
+        const steps = Math.min(sideLayers, Math.ceil(2 * halfDepth * side));
         if (steps > 0) {
-          ctx.globalAlpha = Math.min(1, 2 * offset * side);
-          for (let i = 0; i <= steps; i++) {
-            const x = pivot + mix(-offset, offset, i / steps);
-            ctx.drawImage(logoSide.image, x - capWidth * logoSide.center, -height / 2, capWidth, height);
+          const step = 2 * halfDepth / steps;
+          ctx.globalAlpha = Math.min(1, 2 * halfDepth * side);
+          for (let i = 0; i < steps; i++) {
+            const z = (i + 0.5) * 2 / steps - 1;
+            const arc = Math.max(0, (Math.abs(z) - (1 - rim)) / rim);
+            const sliceHeight = faceHeight + height * inset * Math.sqrt(1 - arc * arc);
+            // Overlap adjacent antialiased slices, but stop at the physical end planes.
+            const left = Math.max(-halfDepth, i * step - halfDepth - 1 / side);
+            const right = Math.min(halfDepth, (i + 1) * step - halfDepth + 1 / side);
+            const sliceWidth = faceWidth + (right - left) / logoSide.width;
+            const x = pivot + (left + right) / 2;
+            ctx.drawImage(logoSide.image, x - sliceWidth * logoSide.center, -sliceHeight / 2, sliceWidth, sliceHeight);
           }
           ctx.globalAlpha = 1;
         }
         if (faceWidth > width * 0.0001) {
-          ctx.drawImage(logo, front - faceWidth * logoSide.center, -height / 2, faceWidth, height);
+          ctx.drawImage(logo, front - faceWidth * logoSide.center, -faceHeight / 2, faceWidth, faceHeight);
         }
       } else {
         ctx.drawImage(logo, -width / 2, -height / 2, width, height);
