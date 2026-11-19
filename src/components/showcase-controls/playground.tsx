@@ -11,11 +11,13 @@ const subscribe = () => () => undefined;
 export function ShowcasePlayground({
   name,
   preview,
+  previewActions,
   sourceUrl,
   children,
 }: {
   name: string;
   preview: ReactNode;
+  previewActions?: ReactNode;
   sourceUrl: string;
   children: ReactNode;
 }) {
@@ -30,6 +32,7 @@ export function ShowcasePlayground({
       <section className={styles.workspace} aria-label={`${name} playground`}>
         <div className={styles.preview}>
           <div className={styles.stage}>{preview}</div>
+          {previewActions}
         </div>
         <aside aria-label={`${name} settings`}>
           <div className="grid gap-5">

@@ -36,7 +36,7 @@ export function QrPlayground() {
   const { resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const tooLong = Array.from(value).length > maxLength;
-  const canDownload = !tooLong && Boolean(value.trim());
+  const canDownload = mounted && !tooLong && Boolean(value.trim());
 
   async function copyPrompt() {
     const copied = await copyToClipboard(integrationPrompt);
@@ -93,6 +93,19 @@ export function QrPlayground() {
           <p role="status">Enter text or a URL to preview your code.</p>
         )
       }
+      previewActions={
+        <div className="grid justify-items-center gap-2">
+          <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Download QR code">
+            <Button variant="tertiary" disabled={!canDownload} onClick={() => void saveQr("svg")}>
+              Download SVG
+            </Button>
+            <Button variant="tertiary" disabled={!canDownload} onClick={() => void saveQr("png")}>
+              Download PNG
+            </Button>
+          </div>
+          {downloadError && <p className="text-xs" role="status">{downloadError}</p>}
+        </div>
+      }
     >
       <label className="grid gap-2">
         <span>Content</span>
@@ -130,17 +143,6 @@ export function QrPlayground() {
             Reset logo
           </Button>
         )}
-      </div>
-      <div className="grid gap-2">
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="tertiary" disabled={!canDownload} onClick={() => void saveQr("svg")}>
-            Download SVG
-          </Button>
-          <Button variant="tertiary" disabled={!canDownload} onClick={() => void saveQr("png")}>
-            Download PNG
-          </Button>
-        </div>
-        {downloadError && <p className="text-xs" role="status">{downloadError}</p>}
       </div>
       <div className="grid gap-2">
         <Button variant="tertiary" disabled={!mounted} onClick={() => void copyPrompt()}>
