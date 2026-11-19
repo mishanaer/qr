@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { TextMorph } from "torph/react";
 import { QrCode } from "@/components/qr-code";
-import { downloadQr } from "@/components/family-qr/download";
+import { shareOrDownloadQr } from "@/components/family-qr/download";
 import { Button } from "@/components/showcase-controls/components/ui/button";
 import { Input } from "@/components/showcase-controls/components/ui/input";
 import { DownloadIcon } from "@/components/showcase-controls/download-icon";
@@ -62,9 +62,9 @@ export function QrPlayground() {
   async function saveQr(format: "svg" | "png") {
     setDownloadError("");
     try {
-      await downloadQr(value, format, logo);
+      await shareOrDownloadQr(value, format, logo);
     } catch {
-      setDownloadError("Could not download the QR code.");
+      setDownloadError("Could not export the QR code.");
     }
   }
 

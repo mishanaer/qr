@@ -71,12 +71,26 @@ async function createPng(svg: Blob) {
   }
 }
 
-export async function downloadQr(value: string, format: "svg" | "png", logo?: HTMLImageElement) {
+export async function shareOrDownloadQr(value: string, format: "svg" | "png", logo?: HTMLImageElement) {
   const svg = createSvg(value, logo);
-  const url = URL.createObjectURL(format === "svg" ? svg : await createPng(svg));
+  const blob = format === "svg" ? svg : await createPng(svg);
+  const file = new File([blob], `qr-code.${format}`, { type: blob.type });
+  const payload = { files: [file] };
+
+  if (navigator.share && navigator.canShare?.(payload)) {
+    try {
+      await navigator.share(payload);
+      return;
+    } catch (error) {
+      // Closing the sheet or tapping again while it is open should not start a download.
+      if (error instanceof DOMException && (error.name === "AbortError" || error.name === "InvalidStateError")) return;
+    }
+  }
+
+  const url = URL.createObjectURL(file);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `qr-code.${format}`;
+  link.download = file.name;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

@@ -62,6 +62,31 @@ function cornerRadius(pixels: ImageData) {
   return Math.min(0.5, Math.sqrt(missing / (4 - Math.PI)) / span);
 }
 
+// Sample the first solid pixel from either end of each row and column.
+function logoEdgeColor({ width, height, data }: ImageData) {
+  let red = 0, green = 0, blue = 0, samples = 0;
+  function sample(start: number, step: number, length: number) {
+    for (let i = 0; i < length; i++) {
+      const index = 4 * (start + i * step);
+      if (data[index + 3] < 128) continue;
+      red += data[index];
+      green += data[index + 1];
+      blue += data[index + 2];
+      samples++;
+      break;
+    }
+  }
+  for (let y = 0; y < height; y++) {
+    sample(y * width, 1, width);
+    sample((y + 1) * width - 1, -1, width);
+  }
+  for (let x = 0; x < width; x++) {
+    sample(x, width, height);
+    sample((height - 1) * width + x, -width, height);
+  }
+  return samples ? [red / samples, green / samples, blue / samples] : [128, 128, 128];
+}
+
 function makeLogoSide(logo: HTMLImageElement) {
   const side = document.createElement("canvas");
   side.width = side.height = 128;
@@ -69,15 +94,14 @@ function makeLogoSide(logo: HTMLImageElement) {
   if (!ctx) return;
   ctx.drawImage(logo, 0, 0, side.width, side.height);
   let radius = 0.23;
-  let material = 0x808080;
+  let channels = [128, 128, 128];
   let width = 1;
   let center = 0.5;
   try {
     const pixels = ctx.getImageData(0, 0, side.width, side.height);
     radius = cornerRadius(pixels);
     const { data } = pixels;
-    const counts = new Map<number, number>();
-    let mostFrequent = 0;
+    channels = logoEdgeColor(pixels);
     let left = side.width;
     let right = -1;
     for (let i = 3; i < data.length; i += 4) {
@@ -85,13 +109,6 @@ function makeLogoSide(logo: HTMLImageElement) {
       const x = ((i - 3) / 4) % side.width;
       left = Math.min(left, x);
       right = Math.max(right, x);
-      const color = (data[i - 3] << 16) | (data[i - 2] << 8) | data[i - 1];
-      const weight = (counts.get(color) ?? 0) + data[i];
-      counts.set(color, weight);
-      if (weight > mostFrequent) {
-        mostFrequent = weight;
-        material = color;
-      }
     }
     width = Math.max(0, right - left + 1) / side.width;
     if (width) center = (left + right + 1) / (2 * side.width);
@@ -99,7 +116,6 @@ function makeLogoSide(logo: HTMLImageElement) {
     // A cross-origin image can be painted even if its pixels can't be read.
     if (!(error instanceof DOMException && error.name === "SecurityError")) throw error;
   }
-  const channels = [material >> 16, (material >> 8) & 255, material & 255];
   const shade = ctx.createLinearGradient(0, 0, 0, side.height);
   shade.addColorStop(0, cssColor(channels.map(c => c * 0.82)));
   shade.addColorStop(1, cssColor(channels.map(c => c * 0.57)));
