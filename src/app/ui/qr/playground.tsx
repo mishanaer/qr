@@ -6,6 +6,7 @@ import { QrCode } from "@/components/qr-code";
 import { downloadQr } from "@/components/family-qr/download";
 import { Button } from "@/components/showcase-controls/components/ui/button";
 import { Input } from "@/components/showcase-controls/components/ui/input";
+import { DownloadIcon } from "@/components/showcase-controls/download-icon";
 import { ShowcasePlayground } from "@/components/showcase-controls/playground";
 import { copyToClipboard } from "@/lib/clipboard";
 
@@ -95,12 +96,12 @@ export function QrPlayground() {
       }
       previewActions={
         <div className="grid justify-items-center gap-2">
-          <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Download QR code">
-            <Button variant="tertiary" disabled={!canDownload} onClick={() => void saveQr("svg")}>
-              Download SVG
+          <div className="grid grid-cols-2 gap-2" role="group" aria-label="Download QR code">
+            <Button variant="tertiary" leadingIcon={DownloadIcon} aria-label="Download SVG" disabled={!canDownload} onClick={() => void saveQr("svg")}>
+              SVG
             </Button>
-            <Button variant="tertiary" disabled={!canDownload} onClick={() => void saveQr("png")}>
-              Download PNG
+            <Button variant="tertiary" leadingIcon={DownloadIcon} aria-label="Download PNG" disabled={!canDownload} onClick={() => void saveQr("png")}>
+              PNG
             </Button>
           </div>
           {downloadError && <p className="text-xs" role="status">{downloadError}</p>}
