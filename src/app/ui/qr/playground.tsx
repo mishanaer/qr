@@ -13,13 +13,15 @@ import { copyToClipboard } from "@/lib/clipboard";
 const defaultLink = "https://youtu.be/B1QJpdJJYvM?si=0cerviK9scjo_Zo0";
 const maxLength = 256;
 const logoFormats = ".svg,.png,.webp,.jpg,.jpeg";
+const logoPlaceholder = "SVG, PNG, WebP, or JPEG.";
 const subscribe = () => () => undefined;
 const sourceUrl = "https://github.com/mishanaer/qr";
 const integrationPrompt = `Add the React QR component from ${sourceUrl}. Reuse its source and license notices, install uqr@0.1.2, and render <QrCode value={qrValue} label="Scan QR code" /> on the client. Use the app's actual QR value and verify that it scans correctly.`;
 
 export function QrPlayground() {
   const [value, setValue] = useState(defaultLink);
-  const [logo, setLogo] = useState<HTMLImageElement>();
+  const [customLogo, setCustomLogo] = useState<{ image: HTMLImageElement; name: string }>();
+  const logo = customLogo?.image;
   const [logoError, setLogoError] = useState("");
   const [downloadError, setDownloadError] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
@@ -62,7 +64,7 @@ export function QrPlayground() {
         setLogoError("Choose a square image with the same width and height.");
         return;
       }
-      setLogo(image);
+      setCustomLogo({ image, name: file.name });
     } catch {
       if (request === logoRequest.current) setLogoError("Could not open this image.");
     } finally {
@@ -121,20 +123,20 @@ export function QrPlayground() {
             ref={logoInput}
             type="file"
             accept={logoFormats}
-            aria-describedby="qr-logo-formats"
+            aria-description={logoPlaceholder}
+            fileDisplay={{ placeholder: logoPlaceholder, name: customLogo?.name }}
             onChange={(event) => {
               const file = event.currentTarget.files?.[0];
               if (file) void changeLogo(file);
             }}
           />
         </label>
-        <p id="qr-logo-formats" className="text-xs">Square SVG, PNG, WebP, or JPEG</p>
         {logoError && <p className="text-xs" role="status">{logoError}</p>}
         {logo && (
           <Button variant="tertiary" onClick={() => {
             logoRequest.current++;
             if (logoInput.current) logoInput.current.value = "";
-            setLogo(undefined);
+            setCustomLogo(undefined);
             setLogoError("");
           }}>
             Reset logo

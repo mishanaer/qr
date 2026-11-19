@@ -32,10 +32,11 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size">
   /** Pins the field to one step of the size ladder (default 36px, compact
    *  28px). Omitted, it follows the surrounding SizeProvider. */
   size?: SizeVariant;
+  fileDisplay?: { placeholder: string; name?: string };
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, size, type = "text", style, onChange, ...props }, ref) => {
+  ({ className, size, type = "text", style, onChange, fileDisplay, ...props }, ref) => {
     const shape = useShape();
     const sizeClasses = useSize(size);
     const compact = sizeClasses.variant === "compact";
@@ -97,6 +98,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             // gap (12 + 16 + 8, 10 + 14 + 4 compact).
             compact ? "py-1 pl-7" : "py-[7px] pl-9",
             !hasFile && "text-muted-foreground",
+            fileDisplay && "text-transparent file:text-transparent",
           ],
           isNumber && [
             // The browser's spinner arrows give way to the stepper buttons.
@@ -128,10 +130,26 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               "pointer-events-none absolute top-1/2 -translate-y-1/2 transition-colors duration-80",
               compact ? "left-2.5" : "left-3",
-              hasFile ? "text-foreground" : "text-muted-foreground"
+              (fileDisplay ? fileDisplay.name : hasFile) ? "text-foreground" : "text-muted-foreground"
             )}
           />
           {input}
+          {fileDisplay && (
+            <span
+              aria-hidden
+              className={cn(
+                "pointer-events-none absolute inset-y-0 flex min-w-0 items-center gap-2",
+                compact ? "left-7 right-2.5" : "left-9 right-3",
+                sizeClasses.field,
+              )}
+              style={{ fontVariationSettings: fontWeights.normal, ...style }}
+            >
+              <span className="shrink-0 text-foreground">Choose file</span>
+              <span className={fileDisplay.name ? "truncate text-foreground" : "min-w-0 leading-none text-muted-foreground"}>
+                {fileDisplay.name || fileDisplay.placeholder}
+              </span>
+            </span>
+          )}
         </span>
       );
     }
