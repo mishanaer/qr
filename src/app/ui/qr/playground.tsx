@@ -157,6 +157,9 @@ export function QrPlayground() {
             }}
             onChange={(event) => {
               const file = event.currentTarget.files?.[0];
+              // Some browsers paint a native thumbnail even when the file text is transparent.
+              // Only the validated logo in React state should appear in this picker.
+              event.currentTarget.value = "";
               if (file) void changeLogo(file);
             }}
           />
