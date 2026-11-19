@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
+import { TextMorph } from "torph/react";
 import { QrCode } from "@/components/qr-code";
 import { downloadQr } from "@/components/family-qr/download";
 import { Button } from "@/components/showcase-controls/components/ui/button";
@@ -24,16 +25,23 @@ export function QrPlayground() {
   const logo = customLogo?.image;
   const [logoError, setLogoError] = useState("");
   const [downloadError, setDownloadError] = useState("");
-  const [copyStatus, setCopyStatus] = useState("");
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
+  const copyTimer = useRef<number | undefined>(undefined);
   const logoRequest = useRef(0);
   const { resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const tooLong = Array.from(value).length > maxLength;
   const canDownload = mounted && !tooLong && Boolean(value.trim());
 
+  useEffect(() => () => window.clearTimeout(copyTimer.current), []);
+
   async function copyPrompt() {
     const copied = await copyToClipboard(integrationPrompt);
-    setCopyStatus(copied ? "Prompt copied" : "Could not copy the prompt.");
+    window.clearTimeout(copyTimer.current);
+    setCopyStatus(copied ? "copied" : "error");
+    if (copied) {
+      copyTimer.current = window.setTimeout(() => setCopyStatus("idle"), 1500);
+    }
   }
 
   async function saveQr(format: "svg" | "png") {
@@ -136,10 +144,14 @@ export function QrPlayground() {
         {logoError && <p className="text-xs" role="status">{logoError}</p>}
       </div>
       <div className="grid gap-2">
-        <Button variant="tertiary" disabled={!mounted} onClick={() => void copyPrompt()}>
-          Copy prompt
+        <Button variant="tertiary" disabled={!mounted} aria-label="Copy prompt" onClick={() => void copyPrompt()}>
+          <span aria-hidden>
+            Cop<TextMorph className="antialiased">{copyStatus === "copied" ? "ied" : "y prompt"}</TextMorph>
+          </span>
         </Button>
-        <p className={copyStatus ? "text-xs" : "sr-only"} role="status">{copyStatus}</p>
+        <p className={copyStatus === "error" ? "text-xs" : "sr-only"} role="status">
+          {copyStatus === "error" ? "Could not copy the prompt." : copyStatus === "copied" ? "Copied" : ""}
+        </p>
       </div>
     </ShowcasePlayground>
   );
