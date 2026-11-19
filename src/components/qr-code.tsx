@@ -48,7 +48,7 @@ export function QrCode({
         padding: 0,
         border: 0,
         background: "none",
-        touchAction: interactive ? "pan-y pinch-zoom" : "auto",
+        touchAction: interactive ? "pinch-zoom" : "auto",
       }}
     >
       <canvas
