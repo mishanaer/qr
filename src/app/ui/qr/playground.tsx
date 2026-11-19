@@ -56,8 +56,13 @@ export function QrPlayground() {
       const image = new Image();
       image.src = url;
       await image.decode();
+      if (request !== logoRequest.current) return;
       if (!image.naturalWidth || !image.naturalHeight) throw new Error("Empty image");
-      if (request === logoRequest.current) setLogo(image);
+      if (image.naturalWidth !== image.naturalHeight) {
+        setLogoError("Choose a square image with the same width and height.");
+        return;
+      }
+      setLogo(image);
     } catch {
       if (request === logoRequest.current) setLogoError("Could not open this image.");
     } finally {
@@ -123,7 +128,7 @@ export function QrPlayground() {
             }}
           />
         </label>
-        <p id="qr-logo-formats" className="text-xs">SVG, PNG, WebP, or JPEG</p>
+        <p id="qr-logo-formats" className="text-xs">Square SVG, PNG, WebP, or JPEG</p>
         {logoError && <p className="text-xs" role="status">{logoError}</p>}
         {logo && (
           <Button variant="tertiary" onClick={() => {
