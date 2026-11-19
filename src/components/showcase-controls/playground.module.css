@@ -1,0 +1,124 @@
+/* Password's Richbox layout and Deslop theme, scoped to the showcase. */
+.showcase {
+  --deslop-surface: light-dark(#f0f0f0, #111111);
+  --deslop-background: light-dark(#ffffff, #151515);
+  --deslop-primary: light-dark(#111111, #ffffff);
+  --deslop-primary-60: light-dark(#11111199, #ffffff99);
+  --deslop-primary-40: light-dark(#11111166, #ffffff66);
+  --deslop-primary-10: light-dark(#1111111a, #ffffff1a);
+  --deslop-primary-8: light-dark(#11111114, #ffffff14);
+  --deslop-primary-5: light-dark(#1111110d, #ffffff0d);
+  --deslop-primary-4: light-dark(#1111110a, #ffffff0a);
+  --accent-blue: light-dark(#4c92de, #77a7dd);
+  --background: var(--deslop-background);
+  --foreground: var(--deslop-primary);
+  --muted-foreground: var(--deslop-primary-60);
+  --border: var(--deslop-primary-10);
+  --hover: var(--deslop-primary-4);
+  --active: var(--deslop-primary-8);
+  --tint: var(--deslop-primary-8);
+  --tint-hover: var(--deslop-primary-5);
+  --focus-ring: var(--accent-blue);
+  --radius: var(--ui-radius-8);
+
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  min-height: 100vh;
+  padding: 48px max(28px, calc((100vw - 1180px) / 2));
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: var(--ui-space-32);
+}
+
+.preview {
+  min-height: 514px;
+  position: relative;
+  background: var(--deslop-surface);
+  border-radius: var(--ui-radius-20);
+  padding: var(--ui-space-24);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  flex: 1;
+  place-items: center;
+  text-align: center;
+  padding-block: var(--ui-space-24);
+}
+
+.workspace aside {
+  padding: var(--ui-space-6) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.workspace label {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+/* These Richbox utilities are defined by Tailwind 4 in the standalone demos. */
+.showcase * {
+  corner-shape: round;
+}
+
+.showcase :focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+.showcase :global(.text-foreground) {
+  color: var(--foreground);
+}
+
+.showcase :global(.text-background) {
+  color: var(--background);
+}
+
+.showcase :global(.hover\:bg-hover):hover,
+.showcase :global(.group):hover :global(.group-hover\:bg-hover) {
+  background-color: var(--hover);
+}
+
+.showcase :global(.bg-active),
+.showcase :global(.group):active :global(.group-active\:bg-active) {
+  background-color: var(--active);
+}
+
+.showcase [data-slot="input"] {
+  border-color: var(--border);
+}
+
+.showcase [data-slot="input"]::placeholder {
+  color: var(--muted-foreground);
+}
+
+.showcase [data-slot="input"]:focus {
+  border-color: var(--deslop-primary-40);
+  background-color: transparent;
+  outline: none;
+}
+
+@media (max-width: 760px) {
+  .showcase {
+    padding: 28px 18px;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .preview {
+    min-height: 424px;
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "qr",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@12.15.0",
+  "license": "MIT",
+  "description": "Animated QR code with a customizable logo for React.",
+  "homepage": "https://mishanaer.com/ui/qr",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mishanaer/qr.git"
+  },
+  "exports": {
+    ".": "./src/components/qr-code.tsx"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@base-ui/react": "1.9.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "lucide-react": "0.562.0",
+    "next": "16.1.1",
+    "next-themes": "0.4.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "tailwind-merge": "3.4.0",
+    "uqr": "0.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.27",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.4.47",
+    "tailwindcss": "3.4.13",
+    "tailwindcss-animate": "1.0.7",
+    "typescript": "5.9.3"
+  }
+}
