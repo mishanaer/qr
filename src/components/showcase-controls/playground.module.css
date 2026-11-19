@@ -78,8 +78,7 @@
 }
 
 .showcase [data-slot="qr-code"]:focus-visible {
-  outline-color: var(--deslop-primary-40);
-  border-radius: var(--ui-radius-20);
+  outline: none;
 }
 
 .showcase :global(.text-foreground) {
