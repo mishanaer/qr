@@ -119,51 +119,38 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     );
 
     if (isFile) {
-      // Native inputs take no children, so the file icon sits beside the
-      // input in a wrapper, over its left padding.
-      const graphicPosition = cn(
-        "pointer-events-none absolute top-1/2 -translate-y-1/2",
-        compact ? "left-2.5" : "left-3",
+      const graphic = fileDisplay?.thumbnail ? (
+        // eslint-disable-next-line @next/next/no-img-element -- The preview already has a browser-ready URL.
+        <img src={fileDisplay.thumbnail} alt="" width={sizeClasses.icon} height={sizeClasses.icon} className="shrink-0 rounded-sm" />
+      ) : (
+        <FileIcon
+          size={sizeClasses.icon}
+          strokeWidth={1.5}
+          aria-hidden
+          className={cn("shrink-0 transition-colors duration-80", (fileDisplay ? fileDisplay.name : hasFile) ? "text-foreground" : "text-muted-foreground")}
+        />
       );
       return (
         <span data-slot="input-file" className="relative block w-full min-w-0">
-          {fileDisplay?.thumbnail ? (
-            // eslint-disable-next-line @next/next/no-img-element -- This is a tiny, local data URL.
-            <img
-              src={fileDisplay.thumbnail}
-              alt=""
-              width={sizeClasses.icon}
-              height={sizeClasses.icon}
-              className={cn(graphicPosition, "rounded-sm")}
-            />
-          ) : (
-            <FileIcon
-              size={sizeClasses.icon}
-              strokeWidth={1.5}
-              aria-hidden
-              className={cn(
-                graphicPosition,
-                "transition-colors duration-80",
-                (fileDisplay ? fileDisplay.name : hasFile) ? "text-foreground" : "text-muted-foreground"
-              )}
-            />
-          )}
           {input}
-          {fileDisplay && (
-            <span
-              aria-hidden
-              className={cn(
-                "pointer-events-none absolute inset-y-0 flex min-w-0 items-center",
-                compact ? "left-7 right-2.5" : "left-9 right-3",
-                sizeClasses.field,
-              )}
-              style={{ fontVariationSettings: fontWeights.normal, ...style }}
-            >
+          <span
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute inset-0 flex items-center",
+              sizeClasses.px,
+              fileDisplay && "justify-center text-center",
+              fileDisplay && sizeClasses.gap,
+              sizeClasses.field,
+            )}
+            style={{ fontVariationSettings: fontWeights.normal, ...style }}
+          >
+            {graphic}
+            {fileDisplay && (
               <span className={fileDisplay.name ? "truncate text-foreground" : "min-w-0 leading-none text-muted-foreground"}>
                 {fileDisplay.name || fileDisplay.placeholder}
               </span>
-            </span>
-          )}
+            )}
+          </span>
         </span>
       );
     }
