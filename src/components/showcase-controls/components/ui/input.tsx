@@ -138,7 +138,6 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               "pointer-events-none absolute inset-0 flex items-center",
               sizeClasses.px,
-              fileDisplay && "justify-center text-center",
               fileDisplay && sizeClasses.gap,
               sizeClasses.field,
             )}
