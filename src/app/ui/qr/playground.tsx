@@ -148,7 +148,7 @@ export function QrPlayground() {
       }
     >
       <label className="grid gap-2">
-        <span>Link</span>
+        <span>Content</span>
         <Input
           value={value}
           aria-invalid={tooLong || undefined}
