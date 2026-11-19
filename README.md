@@ -17,7 +17,7 @@ Open [localhost:3000](http://localhost:3000). The demo accepts SVG, PNG, WebP, a
 <QrCode value="https://example.com" label="Scan to open the site" />
 ```
 
-Pass a decoded HTML image to `logo` to replace the built-in mark. The component fits the image inside the existing center space and applies a flat flip. Omit `logo` to use the built-in animated mark. Use `size` for the width in CSS pixels and `static` to disable interaction.
+Pass a decoded HTML image to `logo` to replace the built-in mark. The component fits the image inside the existing center space and gives it a rotating side profile based on the image silhouette. Omit `logo` to use the built-in animated mark. Use `size` for the width in CSS pixels and `static` to disable interaction.
 
 The decorative treatment can affect scanning support. Test your content and logo with the devices you plan to support.
 

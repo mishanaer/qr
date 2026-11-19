@@ -15,6 +15,7 @@ import {
   type Wave,
 } from "./motion";
 import { logoOutline, squircleOutline } from "./shape";
+import { logoPoses } from "./logo-poses";
 
 type Point = { x: number; y: number };
 type Stroke = Point & { born: number; palette: number };
@@ -22,6 +23,37 @@ const center = { x: markCenter, y: markCenter };
 const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 const cssColor = (ink: number[]) => `rgb(${ink.join(" ")})`;
 const now = () => performance.now() / 1000;
+const logoDepth = logoPoses[logoPoses.length - 1].width / 100;
+const sideLayers = 32;
+
+function makeLogoSide(logo: HTMLImageElement) {
+  const side = document.createElement("canvas");
+  side.width = side.height = 128;
+  const ctx = side.getContext("2d");
+  if (!ctx) return;
+  ctx.drawImage(logo, 0, 0, side.width, side.height);
+  ctx.globalCompositeOperation = "source-in";
+  ctx.fillStyle = "#353535";
+  ctx.fillRect(0, 0, side.width, side.height);
+
+  let width = 1;
+  try {
+    const { data } = ctx.getImageData(0, 0, side.width, side.height);
+    let left = side.width;
+    let right = -1;
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] <= 16) continue;
+      const x = ((i - 3) / 4) % side.width;
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+    }
+    width = Math.max(0, right - left + 1) / side.width;
+  } catch (error) {
+    // A cross-origin image can be painted even if its pixels can't be read.
+    if (!(error instanceof DOMException && error.name === "SecurityError")) throw error;
+  }
+  return { image: side, width };
+}
 
 export function mountFamilyQr(
   canvas: HTMLCanvasElement,
@@ -35,6 +67,7 @@ export function mountFamilyQr(
   if (!ctx || !target) return;
   const { cell, logoWidth, dots, finders } = makeLayout(code);
   const logoBounds = logo?.naturalWidth && logo.naturalHeight ? fitLogo(1, logo) : undefined;
+  const logoSide = logo && logoBounds && interactive ? makeLogoSide(logo) : undefined;
   const card = squircleOutline(0, 0, 1, cardRadius, new Path2D());
   let outline = "";
   const face = logoOutline(0, new Path2D());
@@ -238,8 +271,18 @@ export function mountFamilyQr(
     if (logo && logoBounds) {
       const width = size * 100 * logoBounds.width;
       const height = size * 100 * logoBounds.height;
-      ctx.scale(Math.abs(Math.cos(angle)), 1);
-      ctx.drawImage(logo, -width / 2, -height / 2, width, height);
+      const faceWidth = width * Math.abs(Math.cos(angle));
+      const depth = logoSide ? width * logoSide.width * logoDepth * Math.sin(angle) : 0;
+      const front = depth / 2;
+      if (logoSide && Math.abs(depth) > 0.00001) {
+        // Overlap the alpha silhouettes so the side stays solid even edge-on.
+        const slice = Math.max(faceWidth, (2 * Math.abs(depth)) / sideLayers);
+        for (let layer = 0; layer < sideLayers; layer++) {
+          const x = mix(-front, front, layer / sideLayers);
+          ctx.drawImage(logoSide.image, x - slice / 2, -height / 2, slice, height);
+        }
+      }
+      ctx.drawImage(logo, front - faceWidth / 2, -height / 2, faceWidth, height);
     } else {
       ctx.scale(Math.sin(2 * angle) > 0 ? -size : size, size);
       ctx.fillStyle = cssColor(logoInk);
