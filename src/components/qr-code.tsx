@@ -48,6 +48,9 @@ export function QrCode({
         padding: 0,
         border: 0,
         background: "none",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        WebkitTouchCallout: "none",
         touchAction: interactive ? "pinch-zoom" : "auto",
       }}
     >

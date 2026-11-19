@@ -45,6 +45,13 @@
   min-width: 0;
 }
 
+.showcase > h1,
+.stage {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
